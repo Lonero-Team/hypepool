@@ -26,9 +26,9 @@
 
 using Hypepool.Common.Shares;
 
-namespace Hypepool.Monero
+namespace Hypepool.Lonero
 {
-    public class MoneroShare : ShareBase
+    public class LoneroShare : ShareBase
     {
     }
 }
