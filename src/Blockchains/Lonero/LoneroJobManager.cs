@@ -29,26 +29,26 @@ using System.Reactive.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Hypepool.Common.Mining.Jobs;
-using Hypepool.Monero.Daemon.Requests;
-using Hypepool.Monero.Daemon.Responses;
+using Hypepool.Lonero.Daemon.Requests;
+using Hypepool.Lonero.Daemon.Responses;
 using Serilog;
 
-namespace Hypepool.Monero
+namespace Hypepool.Lonero
 {
-    public class MoneroJobManager : JobManagerBase<MoneroJob>
+    public class LoneroJobManager : JobManagerBase<LoneroJob>
     {        
         private readonly byte[] instanceId;
         private readonly JobCounter _jobCounter;
 
-        public MoneroJobManager()
+        public LoneroJobManager()
         {
-            _logger = Log.ForContext<MoneroJobManager>().ForContext("Pool", "XMR");
+            _logger = Log.ForContext<LoneroJobManager>().ForContext("Pool", "LNR");
 
             _jobCounter = new JobCounter();
 
             using (var rng = RandomNumberGenerator.Create())
             {
-                instanceId = new byte[MoneroConstants.InstanceIdSize];
+                instanceId = new byte[LoneroConstants.InstanceIdSize];
                 rng.GetNonZeroBytes(instanceId);
             }
         }
@@ -78,7 +78,7 @@ namespace Hypepool.Monero
                     .RefCount(); // run the observer as long as we have a valid listener.
         }
 
-        protected override async Task<MoneroJob> UpdateJob()
+        protected override async Task<LoneroJob> UpdateJob()
         {
             try
             {
@@ -86,11 +86,11 @@ namespace Hypepool.Monero
                 var request = new GetBlockTemplateRequest
                 {
                     WalletAddress = PoolContext.PoolAddress,
-                    ReserveSize = MoneroConstants.ReserveSize
+                    ReserveSize = LoneroConstants.ReserveSize
                 };
 
                 // call getblocktemplate() from daemon.
-                var response = await PoolContext.Daemon.ExecuteCommandAsync<GetBlockTemplateResponse>(MoneroRpcCommands.GetBlockTemplate, request);
+                var response = await PoolContext.Daemon.ExecuteCommandAsync<GetBlockTemplateResponse>(LoneroRpcCommands.GetBlockTemplate, request);
 
                 // make sure we are free of errors.
                 if (response.Error != null)
@@ -108,7 +108,7 @@ namespace Hypepool.Monero
                 if (gotNewBlockTemplate)
                 {
                     var jobId = _jobCounter.GetNext(); // create a new job id.
-                    var job = new MoneroJob(jobId, blockTemplate, instanceId); // cook the job.
+                    var job = new LoneroJob(jobId, blockTemplate, instanceId); // cook the job.
                     CurrentJob = job; // set the current job.
                     return job;
                 }
