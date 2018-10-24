@@ -31,13 +31,13 @@ using Hypepool.Common.Native;
 using Hypepool.Common.Stratum;
 using Hypepool.Common.Utils.Buffers;
 using Hypepool.Common.Utils.Extensions;
-using Hypepool.Monero.Daemon.Responses;
-using Hypepool.Monero.Stratum.Responses;
+using Hypepool.Lonero.Daemon.Responses;
+using Hypepool.Lonero.Stratum.Responses;
 using Org.BouncyCastle.Math;
 
-namespace Hypepool.Monero
+namespace Hypepool.Lonero
 {
-    public class MoneroJob : IJob
+    public class LoneroJob : IJob
     {
         public int Id { get; }
 
@@ -47,7 +47,7 @@ namespace Hypepool.Monero
         private uint extraNonce = 0;
         private readonly JobCounter _workerJobCounter;
 
-        public MoneroJob(int id ,GetBlockTemplateResponse blockTemplate, byte[] instanceId)
+        public LoneroJob(int id ,GetBlockTemplateResponse blockTemplate, byte[] instanceId)
         {
             Id = id;
             BlockTemplate = blockTemplate;
@@ -61,14 +61,14 @@ namespace Hypepool.Monero
             _blobTemplate = BlockTemplate.Blob.HexToByteArray();
 
             // inject instanceId at the end of the reserved area of the blob
-            var destOffset = (int)BlockTemplate.ReservedOffset + MoneroConstants.ExtraNonceSize;
-            Buffer.BlockCopy(instanceId, 0, _blobTemplate, destOffset, MoneroConstants.InstanceIdSize);
+            var destOffset = (int)BlockTemplate.ReservedOffset + LoneroConstants.ExtraNonceSize;
+            Buffer.BlockCopy(instanceId, 0, _blobTemplate, destOffset, LoneroConstants.InstanceIdSize);
         }
 
         public MoneroJobParams CreateWorkerJob(IStratumClient client)
         {
             var context = client.GetContextAs<MoneroWorkerContext>();
-            var workerJob = new MoneroWorkerJob(_workerJobCounter.GetNext(), BlockTemplate.Height, context.Difficulty, ++extraNonce);
+            var workerJob = new LoneroWorkerJob(_workerJobCounter.GetNext(), BlockTemplate.Height, context.Difficulty, ++extraNonce);
 
             var blob = EncodeBlob(workerJob.ExtraNonce);
             var target = EncodeTarget(workerJob.Difficulty);
@@ -94,7 +94,7 @@ namespace Hypepool.Monero
         private string EncodeTarget(double difficulty)
         {
             var diff = BigInteger.ValueOf((long)(difficulty * 255d));
-            var quotient = MoneroConstants.Diff1.Divide(diff).Multiply(BigInteger.ValueOf(255));
+            var quotient = LoneroConstants.Diff1.Divide(diff).Multiply(BigInteger.ValueOf(255));
             var bytes = quotient.ToByteArray();
             var padded = Enumerable.Repeat((byte)0, 32).ToArray();
 
