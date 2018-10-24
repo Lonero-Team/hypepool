@@ -28,9 +28,9 @@ using System.Collections.Generic;
 using Hypepool.Common.Coins;
 using Org.BouncyCastle.Math;
 
-namespace Hypepool.Monero
+namespace Hypepool.Lonero
 {
-    public class MoneroConstants
+    public class LoneroConstants
     {
         public static readonly Dictionary<CoinType, int> AddressLength = new Dictionary<CoinType, int>
         {
@@ -50,7 +50,7 @@ namespace Hypepool.Monero
         public const int ReserveSize = ExtraNonceSize + InstanceIdSize + 1;
     }
 
-    public static class MoneroRpcCommands
+    public static class LoneroRpcCommands
     {
         public const string GetInfo = "get_info";
         public const string GetBlockTemplate = "getblocktemplate";
@@ -59,7 +59,7 @@ namespace Hypepool.Monero
         public const string GetBlockHeaderByHeight = "getblockheaderbyheight";
     }
 
-    public static class MoneroWalletCommands
+    public static class LoneroWalletCommands
     {
         public const string GetBalance = "getbalance";
         public const string GetAddress = "getaddress";
