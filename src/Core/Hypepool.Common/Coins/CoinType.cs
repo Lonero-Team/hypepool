@@ -30,27 +30,14 @@ namespace Hypepool.Common.Coins
     {
         // ReSharper disable InconsistentNaming
         BTC, // Bitcoin
-        BCH, // Bitcoin Cash
-        LTC, // Litecoin
-        DOGE, // Dogecoin,
-        XMR, // Monero
-        GRS, // GroestlCoin
+        LNR, // Lonero
         DGB, // Digibyte
         NMC, // Namecoin
-        VIA, // Viacoin
         PPC, // Peercoin
         ZEC, // ZCash
-        ETH, // Ethereum
         ETC, // Ethereum Classic
-        EXP, // Expanse
         DASH, // Dash
-        MONA, // Monacoin
         VTC, // Vertcoin
-        BTG, // Bitcoin Gold
-        GLT, // Globaltoken
-        ELLA, // Ellaism
         AEON, // AEON
-        STAK, // Straks
-        ETN   // Electroneum
     }
 }
