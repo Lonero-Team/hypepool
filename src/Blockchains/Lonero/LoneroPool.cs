@@ -39,24 +39,24 @@ using Hypepool.Common.Native;
 using Hypepool.Common.Pools;
 using Hypepool.Common.Stratum;
 using Hypepool.Common.Utils.Helpers.Time;
-using Hypepool.Monero.Daemon.Requests;
-using Hypepool.Monero.Daemon.Responses;
-using Hypepool.Monero.Stratum;
-using Hypepool.Monero.Stratum.Requests;
-using Hypepool.Monero.Stratum.Responses;
+using Hypepool.Lonero.Daemon.Requests;
+using Hypepool.Lonero.Daemon.Responses;
+using Hypepool.Lonero.Stratum;
+using Hypepool.Lonero.Stratum.Requests;
+using Hypepool.Lonero.Stratum.Responses;
 using Newtonsoft.Json;
 using Serilog;
 
-namespace Hypepool.Monero
+namespace Hypepool.Lonero
 {
-    public class MoneroPool : PoolBase<MoneroShare>
+    public class LoneroPool : PoolBase<LoneroShare>
     {
         private ulong _poolAddressBase58Prefix;
 
-        public MoneroPool(IServerFactory serverFactory)
+        public LoneroPool(IServerFactory serverFactory)
             : base(serverFactory)
         {
-            _logger = Log.ForContext<MoneroPool>().ForContext("Pool", "XMR");
+            _logger = Log.ForContext<LoneroPool>().ForContext("Pool", "LNR");
         }
 
         public override async Task Initialize()
@@ -65,20 +65,20 @@ namespace Hypepool.Monero
 
             try
             {
-                PoolContext = new MoneroPoolContext();
+                PoolContext = new LoneroPoolContext();
 
-                var miningDaemon = new DaemonClient("127.0.0.1", 28081, "user", "pass", MoneroConstants.DaemonRpcLocation);
-                var wallDaemon = new DaemonClient("127.0.0.1", 28085, "user", "pass", MoneroConstants.DaemonRpcLocation);
-                var jobManager = new MoneroJobManager();
+                var miningDaemon = new DaemonClient("127.0.0.1", 34414, "user", "pass", LoneroConstants.DaemonRpcLocation);
+                var wallDaemon = new DaemonClient("127.0.0.1", 34415, "user", "pass", LoneroConstants.DaemonRpcLocation);
+                var jobManager = new LoneroJobManager();
                 var stratumServer = ServerFactory.GetStratumServer();
 
-                ((MoneroPoolContext)PoolContext).Configure(miningDaemon, wallDaemon, jobManager, stratumServer); // configure the pool context.
+                ((LoneroPoolContext)PoolContext).Configure(miningDaemon, wallDaemon, jobManager, stratumServer); // configure the pool context.
                 PoolContext.JobManager.Configure(PoolContext);
 
                 await RunPreInitChecksAsync(); // any pre-init checks.
 
                 PoolContext.Daemon.Initialize(); // initialize mining daemon.
-                ((MoneroPoolContext)PoolContext).WalletDaemon.Initialize(); // initialize wallet daemon.
+                ((LoneroPoolContext)PoolContext).WalletDaemon.Initialize(); // initialize wallet daemon.
                 await WaitDaemonConnection(); // wait for coin daemon connection.
                 await EnsureDaemonSynchedAsync(); // ensure the coin daemon is synced to network.
 
@@ -96,8 +96,8 @@ namespace Hypepool.Monero
             {
                 await PoolContext.JobManager.Start();
 
-                ((MoneroJobManager)PoolContext.JobManager).JobQueue.Subscribe(x => BroadcastJob((MoneroJob)x));
-                await ((MoneroJobManager)PoolContext.JobManager).JobQueue.Take(1).ToTask(); // wait for the first blocktemplate.
+                ((LoneroJobManager)PoolContext.JobManager).JobQueue.Subscribe(x => BroadcastJob((LoneroJob)x));
+                await ((LoneroJobManager)PoolContext.JobManager).JobQueue.Take(1).ToTask(); // wait for the first blocktemplate.
 
                 PoolContext.StratumServer.Start(this);
             }
@@ -107,13 +107,13 @@ namespace Hypepool.Monero
             }
         }
 
-        private void BroadcastJob(MoneroJob job)
+        private void BroadcastJob(LoneroJob job)
         {
             _logger.Information($"Broadcasting new job 0x{job.Id:x8}..");
 
             PoolContext.StratumServer.ForEachClient(client =>
             {
-                var context = client.GetContextAs<MoneroWorkerContext>(); // get client context.
+                var context = client.GetContextAs<LoneroWorkerContext>(); // get client context.
                 if (!context.IsAuthorized || !context.IsSubscribed) // if client is not authorized or subscribed yet,
                     return; // skip him.
 
@@ -126,7 +126,7 @@ namespace Hypepool.Monero
                     return; // skip him for the new job.
                 }
 
-                var workerJob = ((MoneroJobManager) PoolContext.JobManager).CurrentJob.CreateWorkerJob(client);
+                var workerJob = ((LoneroJobManager) PoolContext.JobManager).CurrentJob.CreateWorkerJob(client);
                 // todo: send it.
             });
         }
@@ -141,8 +141,8 @@ namespace Hypepool.Monero
 
         protected override async Task RunPostInitChecksAsync()
         {
-            var infoResponse = await PoolContext.Daemon.ExecuteCommandAsync(MoneroRpcCommands.GetInfo);
-            var addressResponse = await ((MoneroPoolContext)PoolContext).WalletDaemon.ExecuteCommandAsync<GetAddressResponse>(MoneroWalletCommands.GetAddress);
+            var infoResponse = await PoolContext.Daemon.ExecuteCommandAsync(LoneroRpcCommands.GetInfo);
+            var addressResponse = await ((LoneroPoolContext)PoolContext).WalletDaemon.ExecuteCommandAsync<GetAddressResponse>(LoneroWalletCommands.GetAddress);
 
             // ensure pool owns wallet
             if (addressResponse.Response?.Address != PoolContext.PoolAddress)
@@ -172,7 +172,7 @@ namespace Hypepool.Monero
 
         protected override async Task<bool> IsDaemonConnectionHealthyAsync()
         {
-            var response = await PoolContext.Daemon.ExecuteCommandAsync<GetInfoResponse>(MoneroRpcCommands.GetInfo); // getinfo.
+            var response = await PoolContext.Daemon.ExecuteCommandAsync<GetInfoResponse>(LoneroRpcCommands.GetInfo); // getinfo.
 
             // check if we are free of any errors.
             if (response.Error == null) // if so we,
@@ -194,7 +194,7 @@ namespace Hypepool.Monero
 
         protected override async Task<bool> IsDaemonConnectedToNetworkAsync()
         {
-            var response = await PoolContext.Daemon.ExecuteCommandAsync<GetInfoResponse>(MoneroRpcCommands.GetInfo); // getinfo.
+            var response = await PoolContext.Daemon.ExecuteCommandAsync<GetInfoResponse>(LoneroRpcCommands.GetInfo); // getinfo.
 
             return response.Error == null && response.Response != null && // check if coin daemon have any incoming + outgoing connections.
                    (response.Response.OutgoingConnectionsCount + response.Response.IncomingConnectionsCount) > 0;
@@ -205,19 +205,19 @@ namespace Hypepool.Monero
             var request = new GetBlockTemplateRequest
             {
                 WalletAddress = PoolContext.PoolAddress,
-                ReserveSize = MoneroConstants.ReserveSize
+                ReserveSize = LoneroConstants.ReserveSize
             };
 
             while (true) // loop until sync is complete.
             {
-                var blockTemplateResponse = await PoolContext.Daemon.ExecuteCommandAsync<GetBlockTemplateResponse>(MoneroRpcCommands.GetBlockTemplate, request);
+                var blockTemplateResponse = await PoolContext.Daemon.ExecuteCommandAsync<GetBlockTemplateResponse>(LoneroRpcCommands.GetBlockTemplate, request);
 
                 var isSynched = blockTemplateResponse.Error == null || blockTemplateResponse.Error.Code != -9; // is daemon synced to network?
 
                 if (isSynched) // break out of the loop once synched.
                     break;
 
-                var infoResponse = await PoolContext.Daemon.ExecuteCommandAsync<GetInfoResponse>(MoneroRpcCommands.GetInfo); // getinfo.
+                var infoResponse = await PoolContext.Daemon.ExecuteCommandAsync<GetInfoResponse>(LoneroRpcCommands.GetInfo); // getinfo.
                 var currentHeight = infoResponse.Response.Height;
                 var totalBlocks = infoResponse.Response.TargetHeight;
                 var percent = (double) currentHeight / totalBlocks * 100;
@@ -232,26 +232,26 @@ namespace Hypepool.Monero
 
         protected override WorkerContext CreateClientContext()
         {
-            return new MoneroWorkerContext();
+            return new LoneroWorkerContext();
         }
 
         public override async Task OnRequestAsync(IStratumClient client, Timestamped<JsonRpcRequest> timeStampedRequest)
         {
             var request = timeStampedRequest.Value;
-            var context = client.GetContextAs<MoneroWorkerContext>();
+            var context = client.GetContextAs<LoneroWorkerContext>();
 
             switch (request.Method)
             {
-                case MoneroStratumMethods.Login:
+                case LoneroStratumMethods.Login:
                     OnLogin(client, timeStampedRequest);
                     break;
-                case MoneroStratumMethods.GetJob:
+                case LoneroStratumMethods.GetJob:
                     OnGetJob(client, timeStampedRequest);
                     break;
-                case MoneroStratumMethods.Submit:
+                case LoneroStratumMethods.Submit:
                     await OnSubmitAsync(client, timeStampedRequest);
                     break;
-                case MoneroStratumMethods.KeepAlive:
+                case LoneroStratumMethods.KeepAlive:
                     context.LastActivity = MasterClock.Now; // recognize activity.
                     break;
                 default:
@@ -264,7 +264,7 @@ namespace Hypepool.Monero
         private void OnLogin(IStratumClient client, Timestamped<JsonRpcRequest> tsRequest)
         {
             var request = tsRequest.Value;
-            var context = client.GetContextAs<MoneroWorkerContext>();
+            var context = client.GetContextAs<LoneroWorkerContext>();
 
             if (request.Id == null)
             {
@@ -272,7 +272,7 @@ namespace Hypepool.Monero
                 return;
             }
 
-            var loginRequest = request.ParamsAs<MoneroLoginRequest>();
+            var loginRequest = request.ParamsAs<LoneroLoginRequest>();
 
             if (string.IsNullOrEmpty(loginRequest?.Login))
             {
@@ -305,10 +305,10 @@ namespace Hypepool.Monero
                 return;
             }
 
-            var loginResponse = new MoneroLoginResponse
+            var loginResponse = new LoneroLoginResponse
             {
                 Id = client.ConnectionId,
-                Job = ((MoneroJobManager)PoolContext.JobManager).CurrentJob.CreateWorkerJob(client)
+                Job = ((LoneroJobManager)PoolContext.JobManager).CurrentJob.CreateWorkerJob(client)
             };
 
             client.Respond(loginResponse, request.Id);
@@ -332,7 +332,7 @@ namespace Hypepool.Monero
         private bool ValidateAddress(string address)
         {
             // check address length.
-            if (address.Length != MoneroConstants.AddressLength[CoinType.XMR])
+            if (address.Length != LoneroConstants.AddressLength[CoinType.LNR])
                 return false;
 
             var addressPrefix = LibCryptonote.DecodeAddress(address);
