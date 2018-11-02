@@ -29,18 +29,18 @@ using Hypepool.Common.Mining.Jobs;
 using Hypepool.Common.Pools;
 using Hypepool.Common.Stratum;
 
-namespace Hypepool.Monero
+namespace Hypepool.Lonero
 {
-    public class MoneroPoolContext : PoolContext
+    public class LoneroPoolContext : PoolContext
     {
         /// <summary>
         /// Wallet daemon client.
         /// </summary>
         public IDaemonClient WalletDaemon { get; private set; }
 
-        public override string CoinSymbol => "XMR";
+        public override string CoinSymbol => "LNR";
 
-        public override string PoolAddress => "A1fZZpe64V6R4z2jzkN6zm9YEYsGhNC3uTyDyGr1Ettp2o32HNAwFhKXifcwuDcqNMQrkvm3JWXThh79KeUXhHZzA5MASZE";
+        public override string PoolAddress => "FQJRLQsWRFfeYXTztmTk9jRyqbYYHMd3yjmAA8ExM3hkGLyf2KK6BCn9RQxs8CfLxCBTEfdbVkFA5d9RVFKRaTWjNVU7d9E";
 
         public void Configure(IDaemonClient daemon, IDaemonClient walletDaemon, IJobManager jobManager, IStratumServer stratumServer)
         {
